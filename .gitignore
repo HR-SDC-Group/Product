@@ -1,0 +1,7 @@
+node_modules
+config.js
+docker-machine
+postgres-ec2.pem
+sdc-node.pem
+schema.sql
+.DS_Store
