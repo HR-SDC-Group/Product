@@ -3,20 +3,19 @@ const DB_PSW = require('../config.js');
 
 const pool = new Pool({
   user: "postgres",
-  password: DB_PSW,
+  password: DB_PS,
   database: "sdc",
-  host: "184.169.237.47",
+  host: "54.241.119.32",
   port: 5432
 });
 
 const getOne = function (param, callback) {
 
-  var queryStr = `SELECT products.id, products.name, products.slogan, products.description,
-  products.category, products.price, json_agg(json_build_object('feature', features.feature, 'value', features.value)) AS features
+  var queryStr = `SELECT *,(SELECT json_agg(json_build_object('feature', features.feature, 'value', features.value))
+  FROM features WHERE features.product_id= products.id) AS features
   FROM products
-  JOIN features ON features.product_id= products.id
   WHERE products.product_id = ${param}
-  GROUP BY products.id, products.name, products.slogan, products.description, products.category, products.price`;
+  ORDER BY products.id`;
 
   pool.query(queryStr, function(err, results) {
     if (err) { callback(err, null); }
@@ -25,13 +24,13 @@ const getOne = function (param, callback) {
 };
 
 const getStyles = function (param, callback) {
-
+  var subQuery = `SELECT json_agg(json_build_object('thumbnail_url', photos.thumbnail_url, 'url', photos.url)) FROM photos WHERE photos.style_id=styles.id`;
   var queryStr = `SELECT styles.product_id, json_agg(json_build_object
     ('style_id', styles.id, 'name', styles.name, 'original_price', styles.original_price,
-    'sale_price', styles.sale_price)) AS results
+    'sale_price', styles.sale_price)) AS results, ${subQuery} AS photos
   FROM styles
   WHERE styles.product_id = ${param}
-  GROUP BY  styles.product_id, styles.id, styles.name, styles.original_price, styles.sale_price`;
+  ORDER BY styles.product_id`;
   pool.query(queryStr, function(err, results) {
     if (err) { callback(err, null); }
     callback(null, results);
